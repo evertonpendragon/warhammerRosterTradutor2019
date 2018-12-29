@@ -32,7 +32,7 @@ for catFilesToRead in filesToRead:
             #print catalogue.name, type(catalogue)
             if catalogue.name <> None:
                 print 'n1',catalogue.name
-                if catalogue.name in ["sharedrules","sharedprofiles"]:
+                if catalogue.name in ["sharedrules","sharedprofiles","selectionentries","sharedselectionentries","sharedselectionentrygroups"]:
                     for catElement in catalogue.children:
                         if catElement.name <> None:
                             #print 'n2\t',catElement.name
