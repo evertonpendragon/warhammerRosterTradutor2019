@@ -13,12 +13,13 @@ from bs4 import BeautifulSoup
 from googletrans import Translator
 translator = Translator()
 ########################################################################################################################
+# Lê os arquivos cat da pasta wh40k-master, traduz utilizando o dicionário e
 # gera os arquivos catz prontos para serem importados no Battlescribe
 ########################################################################################################################
 
-def compactCat(destPath):
+def compactCat(ppath):
     print '\n\n\n\n',  'Compactando arquivo'
-    os.chdir(destPath)
+    os.chdir(ppath)
     destCatFiles = os.listdir('.')
     destCatFiles = filter(lambda x: x[-1] != 'z', destCatFiles)
     for f in destCatFiles:
@@ -38,8 +39,10 @@ if not os.path.exists(destPath):
 
 for f in os.listdir(originPath):
     originFileFullPath = originPath+f
-    destFileFullPath   = destPath+f
+    PTBR_file = f.replace(' ', '_').replace(',','.').replace('\'','')
+    PTBR_zfile = PTBR_file + 'z'
 
+    destFileFullPath = destPath + PTBR_file
     if os.path.splitext(originFileFullPath)[1] in [".catz",'.gstz']:
         with zip.ZipFile(f, 'r') as zip_ref:
             zip_ref.extractall(destPath)
@@ -57,8 +60,8 @@ with open('dicionario.json', "r") as file:
 
 catz = os.listdir(destPath)
 for cfile in catz:
-    ccatFile = destPath + cfile
-    with open(ccatFile, "r") as file:
+    destCatFileName = destPath + cfile
+    with open(destCatFileName, "r") as file:
         catFile = file.read()
         file.close()
     cat = BeautifulSoup(catFile, "xml")
@@ -68,6 +71,7 @@ for cfile in catz:
     if 1==1: #filtro para debbug
         # TRADUZ ARQUIVO CAT
         for catalogues in cat.find_all("catalogue"):
+            catalogues["name"] += "-PTBR"
             for catalogue in catalogues.children:
                 # print catalogue.name, type(catalogue)
                 if catalogue.name <> None:
@@ -82,7 +86,7 @@ for cfile in catz:
                                     # print rule
                                     if rule in dicionario.keys() and len(rule) > 1:
                                         rulePT = dicionario[rule]
-                                        print "Traduzindo>>>\n", rule, "\n", rulePT
+                                        print "Traduzindo>>>", cfile,"\n", rule, "\n", rulePT
                                         #print type(cat)
                                         try:
                                             #cat.find(text=rule).replaceWith(rulePT)
@@ -106,7 +110,7 @@ for cfile in catz:
                                             if description in dicionario.keys() and len(description) > 1:
                                                 descriptionPT =dicionario[description]
                                                 # print "adicionando", description
-                                                print "Traduzindo>>>\n", description, "\n", descriptionPT
+                                                print "Traduzindo>>>", cfile,"\n", description, "\n", descriptionPT
                                                 #print type(cat)
                                                 try:
                                                     #cat.find(text=description).replaceWith(descriptionPT)
@@ -121,6 +125,7 @@ for cfile in catz:
 
         # TRADUS ARQUIVO GST
         for catalogues in cat.find_all("gameSystem"):
+            catalogues["name"] += "-PTBR"
             for catalogue in catalogues.children:
                 # print catalogue.name, type(catalogue)
                 if catalogue.name <> None:
@@ -135,7 +140,7 @@ for cfile in catz:
                                     # print rule
                                     if rule in dicionario.keys() and len(rule) > 1:
                                         rulePT = dicionario[rule]
-                                        print "Traduzindo>>>\n", rule, "\n", rulePT
+                                        print "Traduzindo>>>", cfile,"\n", rule, "\n", rulePT
                                         #print type(cat)
                                         try:
                                             #cat.find(text=rule).replaceWith(rulePT)
@@ -159,7 +164,7 @@ for cfile in catz:
                                             if description in dicionario.keys() and len(description) > 1:
                                                 descriptionPT =dicionario[description]
                                                 # print "adicionando", description
-                                                print "Traduzindo>>>\n", description, "\n", descriptionPT
+                                                print "Traduzindo>>>", cfile,"\n", description, "\n", descriptionPT
                                                 #print type(cat)
                                                 try:
                                                     #cat.find(text=description).replaceWith(descriptionPT)
@@ -175,7 +180,7 @@ for cfile in catz:
 
     print '\n\n\n\n', cfile, 'Tradução Finalizada'
     #print cat
-    newFile = destPath + cfile
+    newFile = destCatFileName
     xml = cat.prettify("utf-8")
     with open(newFile, "wb") as file:
         file.write(xml)
