@@ -1,0 +1,14 @@
+# Ignore everything
+*
+
+# Don't ignore .gitignore
+!.gitignore
+!.gitattributes
+
+# Don't ignore catalogues and game system
+!*.cat
+!*.gst
+
+# Don't ignore docs
+!*.md
+DWHRCustom.cat

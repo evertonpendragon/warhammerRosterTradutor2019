@@ -5,7 +5,7 @@
 
 ########################################################################################################################
 # Le o arquivo cat e traduz com o google tradutor
-# gera o carquivo cat traduzido na pasta wh40k_PTBR-master
+# gera o carquivo cat traduzido na pasta wh40kBR-master
 ########################################################################################################################
 
 import sys
@@ -21,18 +21,22 @@ import os
 filesToRead = ["Imperium - Space Marines.cat", "Imperium - Space Wolves.cat", "Warhammer 40,000 8th Edition.gst"]
 
 originPath = "./wh40k-master/"
-destPath = "./wh40k_PTBR-master/"
+destPath = "./wh40kBR-master/"
 
 if not os.path.exists(destPath):
     os.makedirs(destPath)
 
 catFiles = os.listdir(originPath)
 
-filesToRead = filter(lambda x: x in filesToRead, catFiles)
+#catFiles = filter(lambda x: x in filesToRead, catFiles)
+
+catFiles = filter(lambda x: os.path.splitext(x)[1] in [".cat",".gst"], catFiles)
 
 
-for catFilesToRead  in filesToRead:
+for catFilesToRead  in catFiles:
     with open(originPath+catFilesToRead) as catFile:
+        print originPath + catFilesToRead
+
         x = catFile.read()
         catFile.close()
     cat = BeautifulSoup(x, "xml")
@@ -40,11 +44,12 @@ for catFilesToRead  in filesToRead:
     with open('dicionario.json', "r") as file:
         dicionario = json.loads(file.read() )
 
+    # traduz arquivo cat
     for catalogues in cat.find_all("catalogue"):
         for catalogue in catalogues.children:
             #print catalogue.name, type(catalogue)
             if catalogue.name <> None:
-                print 'n1',catalogue.name
+                #print 'n1',catalogue.name
                 if catalogue.name in ["sharedrules", "sharedprofiles", "selectionentries", "sharedselectionentries",
                                           "sharedselectionentrygroups","sharedRules","sharedProfiles","sharedSelectionEntryGroups",
                                           "sharedSelectionEntries","selectionEntries"]:
@@ -58,9 +63,13 @@ for catFilesToRead  in filesToRead:
                                 rule = ruleTag.get_text()#
                                 #print rule
                                 if rule not in dicionario.keys() and len(rule) > 1:
-                                    rulePT = translator.translate(rule, dest='pt').text
-                                    print "Traduzindo>>>\n",rule,"\n",rulePT
-                                    dicionario[rule] = rulePT
+                                    try:
+                                        rulePT = translator.translate(rule, dest='pt').text
+                                        print "Traduzindo>>>\n",rule,"\n",rulePT
+                                        dicionario[rule] = rulePT
+                                    except Exception:
+                                        print "falha na traducao"
+                                        sys.exc_clear()
                                 else:
                                     print "ja existe no dicionario", rule
 
@@ -71,13 +80,19 @@ for catFilesToRead  in filesToRead:
                                             description=characteristicsTag["value"]
                                             print description
                                             if description not in dicionario.keys() and len(description) > 1:
-                                                descriptionPT = translator.translate(description, dest='pt').text
-                                                #print "adicionando", description
-                                                print "Traduzindo>>>\n", description, "\n", descriptionPT
-                                                dicionario[description] = descriptionPT
+                                                try:
+                                                    descriptionPT = translator.translate(description, dest='pt').text
+                                                    print "Traduzindo>>>\n", description, "\n", descriptionPT
+                                                    #print "adicionando", description
+                                                    dicionario[description] = descriptionPT
+                                                except Exception:
+                                                    print "falha na traducao"
+                                                    sys.exc_clear()
                                             else:
                                                 print "ja existe no dicionario", description
 
+
+    # traduz o arquivo gst
     for catalogues in cat.find_all("gameSystem"):
         for catalogue in catalogues.children:
             #print catalogue.name, type(catalogue)
@@ -96,9 +111,13 @@ for catFilesToRead  in filesToRead:
                                 rule = ruleTag.get_text()#
                                 #print rule
                                 if rule not in dicionario.keys() and len(rule) > 1:
-                                    rulePT = translator.translate(rule, dest='pt').text
-                                    print "Traduzindo>>>\n",rule,"\n",rulePT
-                                    dicionario[rule] = rulePT
+                                    try:
+                                        rulePT = translator.translate(rule, dest='pt').text
+                                        print "Traduzindo>>>\n",rule,"\n",rulePT
+                                        dicionario[rule] = rulePT
+                                    except Exception:
+                                        print "falha na traducao"
+                                        sys.exc_clear()
                                 else:
                                     print "ja existe no dicionario", rule
 
@@ -109,10 +128,14 @@ for catFilesToRead  in filesToRead:
                                             description=characteristicsTag["value"]
                                             print description
                                             if description not in dicionario.keys() and len(description) > 1:
-                                                descriptionPT = translator.translate(description, dest='pt').text
-                                                #print "adicionando", description
-                                                print "Traduzindo>>>\n", description, "\n", descriptionPT
-                                                dicionario[description] = descriptionPT
+                                                try:
+                                                    descriptionPT = translator.translate(description, dest='pt').text
+                                                    print "Traduzindo>>>\n", description, "\n", descriptionPT
+                                                    #print "adicionando", description
+                                                    dicionario[description] = descriptionPT
+                                                except Exception:
+                                                    print "falha na traducao"
+                                                    sys.exc_clear()
                                             else:
                                                 print "ja existe no dicionario", description
 
