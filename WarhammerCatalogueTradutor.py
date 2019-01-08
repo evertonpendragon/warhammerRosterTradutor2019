@@ -8,6 +8,7 @@ sys.setdefaultencoding('utf8')
 import os
 from shutil import copyfile
 import json
+import requests
 import zipfile as zip
 from shutil import copyfile,rmtree
 from bs4 import BeautifulSoup
@@ -40,13 +41,24 @@ def copyCatToRepoDir(ppath, destPath):
         print 'copiando arquivo', ppath+f, ' ', destPath+f
         copyfile(ppath+f, destPath+f)
 
+def downloadWh40kSource():
+    r = requests.get('https://github.com/BSData/wh40k/archive/master.zip')
+    open('wh40k-master.zip', 'wb').write(r.content)
+    print 'Download completo'
+    with zip.ZipFile('./wh40k-master.zip', mode='r') as zip_ref:
+        zip_ref.extractall(path='.')
+    print 'Arquivos extraídos'
 
+########################################################################################################################
 
 originPath = "./wh40k-master/"
 destPath = "./wh40kBR-master/"
-catRepoDir = 'C:/Users/evert/Documents/GitHub/wh40kBR/'
+catRepoDir = 'C:/Users/evert/Documents/GitHub/BSDataBrasil/wh40kBR/'
 
 gameSystemId='49b6-bc6f-0390-1e40'
+
+print 'Download do repositório de origem'
+downloadWh40kSource()
 
 if os.path.exists(destPath):
     rmtree(destPath, True)
