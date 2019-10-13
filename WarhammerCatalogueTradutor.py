@@ -13,11 +13,30 @@ import zipfile as zip
 from shutil import copyfile,rmtree
 from bs4 import BeautifulSoup
 from googletrans import Translator
+import DataIndexer as dtIdx
+
 translator = Translator()
 ########################################################################################################################
+# Faz download do repositório oficial
 # Lê os arquivos cat da pasta wh40k-master, traduz utilizando o dicionário e
 # gera os arquivos catz prontos para serem importados no Battlescribe
+# Passo 2: Criar o repositorio com o BS clicando em share my data
+# Passo 3: C:\Users\evert\Documents\GitHub\BSDataBrasil\
 ########################################################################################################################
+
+def translate(text,dest):
+    textTransl=''
+    if text not in ('', '0', '-'):
+        try:
+            print "Traduzindo no google >>>\n", text,type(text), "\n", textTransl
+
+            textTransl = translator.translate(text, dest=dest).text
+            return textTransl
+        except Exception,e:
+            print "Falha na traducao do Google, {exception}, {e}".format(exception=Exception.message,e=str(e))
+            sys.exc_clear()
+            return text
+
 
 def compactCat(ppath):
     print '\n\n\n\n',  'Compactando arquivo'
@@ -49,11 +68,25 @@ def downloadWh40kSource():
         zip_ref.extractall(path='.')
     print 'Arquivos extraídos'
 
+def translateText(description,dicionario):
+    #description=description.upper()
+    if description.upper() in dicionario:
+        descriptionPT = dicionario[description]
+    elif description not in ('','0','-'):
+        #description.replace("","'") in dicionario
+        print "Texto nao encontrado no dic {t}".format(t=description)
+        descriptionPT=description
+    return descriptionPT
+
 ########################################################################################################################
 
 originPath = "./wh40k-master/"
 destPath = "./wh40kBR-master/"
 catRepoDir = 'C:/Users/evert/Documents/GitHub/BSDataBrasil/wh40kBR/'
+projectDir= 'C:/Users/evert/Documents/PycharmProjects/WarhammerRosterTradutor/'
+
+
+
 
 gameSystemId='49b6-bc6f-0390-1e40'
 
@@ -88,6 +121,10 @@ with open('dicionario.json', "r") as file:
     dicionario = json.loads(file.read())
     file.close()
 
+dicionario = {k.upper():v for k,v in dicionario.items()}
+dicionarioNew = {}
+
+naoLocalizados=0
 catz = os.listdir(destPath)
 for cfile in catz:
     destCatFileName = destPath + cfile
@@ -115,47 +152,60 @@ for cfile in catz:
                         for catElement in catalogue.children:
                             if catElement.name <> None:
                                 for ruleTag in catElement.find_all("description"):
-                                    rule = ruleTag.get_text()  #
+                                    rule = ruleTag.get_text() .upper() #
                                     # print rule
-                                    if rule in dicionario.keys() and len(rule) > 1:
+                                    if rule.upper() in dicionario.keys() and len(rule) > 1:
                                         rulePT = dicionario[rule]
                                         #print "Traduzindo>>>", cfile,"\n", rule, "\n", rulePT
                                         #print type(cat)
                                         try:
                                             #cat.find(text=rule).replaceWith(rulePT)
-                                            ruleTag["description"]=rulePT
+                                            #ruleTag["description"]=rulePT
+                                            ruleTag.string=rulePT
+
                                         except Exception:
                                             print "falha na traducao"
                                             sys.exc_clear()
 
-                                    # else:
-                                    #     if rule <> '-':
-                                    #         print "Nao existe no dicionario", rule
+                                    else:
+                                        if rule <> '-' and rule <> "" and rule <> " " and type(rule)<>None:
+                                            if rule <> "":
+                                                print "Nao existe no dicionario", rule
+                                                textPT = translate(ruleTag.get_text(), dest='pt')
+                                                dicionarioNew[rule]=textPT
+                                                naoLocalizados += 1
 
                                 for characteristicsTag in catElement.find_all("characteristic"):
-                                    if characteristicsTag["name"] in ["Abilities", "Description"]:
+                                    if characteristicsTag["name"] in ["Abilities", "Description","Details","Capacity"]:
                                         # print profiles["name"],   characteristic["name"], characteristic["value"],characteristic
 
-                                        #print characteristicsTag
+                                        #print characteristicsTag.text
 
-                                        if characteristicsTag.has_attr('value'):
-                                            description = characteristicsTag["value"]
-                                            #print description
-                                            if description in dicionario.keys() and len(description) > 1:
-                                                descriptionPT =dicionario[description]
-                                                # print "adicionando", description
-                                                #print "Traduzindo>>>", cfile,"\n", description, "\n", descriptionPT
-                                                #print type(cat)
-                                                try:
-                                                    #cat.find(text=description).replaceWith(descriptionPT)
+                                        #if characteristicsTag.has_attr('value')  :#removido na versao 2, 13/06/2019
+                                        #description = characteristicsTag["value"] #removido na versao 2, 13/06/2019
+                                        description = characteristicsTag.text.upper() #linhas foram recuadas pq  if de cima foi removido #if characteristicsTag.has_attr('value')
+                                        #print description
+                                        if description.upper() in dicionario.keys() and len(description) > 1:
+                                            descriptionPT =translateText(description,dicionario)#dicionario[description]
+                                            # print "adicionando", description
+                                            #print "Traduzindo>>>", cfile,"\n", description, "\n", descriptionPT
+                                            #print type(cat)
+                                            try:
+                                                #cat.find(text=description).replaceWith(descriptionPT)
 
-                                                    characteristicsTag["value"]=descriptionPT
-                                                except Exception:
-                                                    print "falha na traducao"
-                                                    sys.exc_clear()
-                                            # else:
-                                            #     if description <> '-':
-                                            #         print "nao existe no dicionario", description
+                                                #characteristicsTag["value"]=descriptionPT
+                                                characteristicsTag.string = descriptionPT
+                                                #print characteristicsTag.text
+                                            except Exception, e:
+                                                print "falha na traducao {e}".format(e=str(e))
+                                                sys.exc_clear()
+                                        else:
+                                            if description <> '-' and description <> "":
+                                                print "nao existe no dicionario", description
+                                                if description<>"":
+                                                    naoLocalizados+=1
+                                                    textPT = translate(characteristicsTag.text, dest='pt')
+                                                    dicionarioNew[description] = textPT
 
 
         # TRADUS ARQUIVO GST
@@ -173,43 +223,56 @@ for cfile in catz:
                         for catElement in catalogue.children:
                             if catElement.name <> None:
                                 for ruleTag in catElement.find_all("description"):
-                                    rule = ruleTag.get_text()  #
+                                    rule = ruleTag.get_text() .upper() #
                                     # print rule
-                                    if rule in dicionario.keys() and len(rule) > 1:
+                                    if rule.upper() in dicionario.keys() and len(rule) > 1:
                                         rulePT = dicionario[rule]
                                        # print "Traduzindo>>>", cfile,"\n", rule, "\n", rulePT
                                         try:
                                             #cat.find(text=rule).replaceWith(rulePT)
-                                            ruleTag["description"]=rulePT
+                                            #ruleTag["description"]=rulePT
+                                            # ruleTag["description"]=rulePT
+                                            ruleTag.string = rulePT
                                         except Exception:
                                             print "falha na traducao"
                                             sys.exc_clear()
 
-                                    # else:
-                                    #     print "Nao existe no dicionario", rule
+                                    else:
+
+                                        if description <> "":
+                                            print "Nao existe no dicionario", rule
+                                            naoLocalizados += 1
+                                            textPT = translate(ruleTag.get_text(), dest='pt')
+                                            dicionarioNew[rule] = textPT
 
                                 for characteristicsTag in catElement.find_all("characteristic"):
-                                    if characteristicsTag["name"] in ["Abilities", "Description"]:
+                                    if characteristicsTag["name"] in ["Abilities", "Description","Details","Capacity"]:
                                         # print profiles["name"],   characteristic["name"], characteristic["value"],characteristic
 
                                         #print characteristicsTag
 
-                                        if characteristicsTag.has_attr('value'):
-                                            description = characteristicsTag["value"]
+                                        if characteristicsTag.has_attr('value') or 1==1:
+                                            #description = characteristicsTag["value"]
+                                            description=characteristicsTag.text.upper()
                                             #print description
-                                            if description in dicionario.keys() and len(description) > 1:
+                                            if description.upper() in dicionario.keys() and len(description) > 1:
                                                 descriptionPT =dicionario[description]
                                                 #print "Traduzindo>>>", cfile,"\n", description, "\n", descriptionPT
                                                 #print type(cat)
                                                 try:
                                                     #cat.find(text=description).replaceWith(descriptionPT)
 
-                                                    characteristicsTag["value"]=descriptionPT
+                                                    #characteristicsTag["value"]=descriptionPT
+                                                    characteristicsTag.string = descriptionPT
                                                 except Exception:
                                                     print "falha na traducao"
                                                     sys.exc_clear()
-                                            # else:
-                                            #     print "nao existe no dicionario", description
+                                            else:
+                                                if description<>"":
+                                                    print "nao existe no dicionario", description
+                                                    naoLocalizados+=1
+                                                    textPT = translate(characteristicsTag.text, dest='pt')
+                                                    dicionarioNew[description] = textPT
 
 
 
@@ -225,3 +288,13 @@ for cfile in catz:
 copyCatToRepoDir(destPath, catRepoDir)
 #compacta
 compactCat(destPath)
+
+
+newFile = "{projectDir}dicionario_new.json".format(projectDir=projectDir)
+with open(newFile, "wb") as file:
+    file.write(json.dumps(dicionarioNew,indent=4, sort_keys=True, ensure_ascii=False))
+
+
+print "Registros nao localizados no dicionario {i}".format(i=str(naoLocalizados))
+
+dtIdx.createIndexBsr()

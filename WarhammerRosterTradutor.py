@@ -11,6 +11,9 @@ import json
 from bs4 import BeautifulSoup
 from googletrans import Translator
 translator = Translator()
+########################################################################################################################
+# traduz um arquivo de roster no formato html
+########################################################################################################################
 
 #translator = Translator(service_urls=['translate.google.com','translate.google.co.kr'])
 
